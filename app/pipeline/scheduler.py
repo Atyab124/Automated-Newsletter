@@ -4,7 +4,7 @@ Scheduler for automated newsletter generation
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Dict
 import sys
 from pathlib import Path
 
