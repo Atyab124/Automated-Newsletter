@@ -4,6 +4,7 @@ LinkedIn scraper using Playwright MCP
 import time
 from typing import List, Dict
 from .base_scraper import BaseScraper
+from .snapshot_parser import extract_headlines_from_snapshot
 
 
 class LinkedInScraper(BaseScraper):
@@ -33,20 +34,41 @@ class LinkedInScraper(BaseScraper):
         
         try:
             # Navigate to LinkedIn search
+            # Note: LinkedIn may require login, so this might not work for all users
             search_url = f"https://www.linkedin.com/search/results/content/?keywords={topic.replace(' ', '%20')}"
-            mcp_client.navigate(url=search_url)
             
-            # Wait for page to load
-            time.sleep(3)
+            if hasattr(mcp_client, 'navigate'):
+                mcp_client.navigate(url=search_url)
+            elif callable(mcp_client):
+                mcp_client('navigate', url=search_url)
+            else:
+                return results
+            
+            # Wait for page to load (LinkedIn can be slow)
+            time.sleep(4)
             
             # Get page snapshot
-            snapshot = mcp_client.snapshot()
+            snapshot = None
+            if hasattr(mcp_client, 'snapshot'):
+                snapshot = mcp_client.snapshot()
+            elif callable(mcp_client):
+                snapshot = mcp_client('snapshot')
             
-            # Extract post summaries from snapshot
-            # This would need parsing logic based on LinkedIn's structure
+            if snapshot:
+                # Extract post summaries from snapshot
+                posts = extract_headlines_from_snapshot(snapshot, max_results=self.max_results)
+                
+                for item in posts:
+                    results.append(self.format_result(
+                        source="LinkedIn",
+                        headline=item['text'],
+                        url=item['url']
+                    ))
             
         except Exception as e:
             print(f"Error scraping LinkedIn: {e}")
+            import traceback
+            traceback.print_exc()
         
         return results
 

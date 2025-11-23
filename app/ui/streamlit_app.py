@@ -184,21 +184,35 @@ elif page == "Fact Sheets":
         )
         
         # Manual fact sheet generation
+        st.info("ℹ️ **Note**: Research papers (arXiv, Semantic Scholar) work immediately. News, LinkedIn, and web scraping require Playwright MCP integration. See MCP_INTEGRATION.md for setup.")
+        
         if st.button("Generate New Fact Sheet"):
             topic_name = next(t['topic_name'] for t in topics if t['id'] == selected_topic_id)
             with st.spinner("Generating fact sheet..."):
                 try:
                     builder = FactSheetBuilder()
-                    fact_sheet = builder.build_fact_sheet(topic_name)
+                    # Try to use MCP if available, otherwise just use research papers
+                    fact_sheet = builder.build_fact_sheet(topic_name, use_mcp_client=None)
                     st.session_state.db.save_fact_sheet(
                         selected_topic_id,
                         fact_sheet['markdown'],
                         fact_sheet['json_data']
                     )
                     st.success("Fact sheet generated!")
+                    
+                    # Show summary
+                    json_data = fact_sheet['json_data']
+                    st.write(f"**Summary:**")
+                    st.write(f"- Research Papers: {len(json_data.get('research_papers', []))}")
+                    st.write(f"- News Headlines: {len(json_data.get('news_headlines', []))}")
+                    st.write(f"- LinkedIn Posts: {len(json_data.get('linkedin_posts', []))}")
+                    st.write(f"- Web Articles: {len(json_data.get('web_articles', []))}")
+                    
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
         
         # Display fact sheets
         fact_sheets = st.session_state.db.get_all_fact_sheets(selected_topic_id)

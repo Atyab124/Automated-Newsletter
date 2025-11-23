@@ -2,8 +2,9 @@
 News scraper using Playwright MCP
 """
 import time
-from typing import List, Dict
+from typing import List, Dict, Any, Optional
 from .base_scraper import BaseScraper
+from .snapshot_parser import extract_headlines_from_snapshot
 
 
 class NewsScraper(BaseScraper):
@@ -17,21 +18,14 @@ class NewsScraper(BaseScraper):
         The actual MCP calls should be made by the caller or through a wrapper.
         """
         results = []
-        
-        # This is a placeholder structure - actual implementation would use MCP
-        # The caller should use Playwright MCP to:
-        # 1. Navigate to Google News search
-        # 2. Search for the topic
-        # 3. Extract headlines and URLs
-        
-        # For now, return empty list - actual scraping happens via MCP wrapper
         return results
     
     def scrape_with_mcp(self, mcp_client) -> List[Dict]:
         """
         Scrape using Playwright MCP client
         
-        This method should be called with an MCP client that has Playwright tools
+        This method should be called with an MCP client that has Playwright tools.
+        In Cursor, mcp_client should have navigate() and snapshot() methods.
         """
         results = []
         topic = getattr(self, '_current_topic', '')
@@ -42,20 +36,43 @@ class NewsScraper(BaseScraper):
         try:
             # Navigate to Google News
             search_url = f"https://news.google.com/search?q={topic.replace(' ', '+')}"
-            mcp_client.navigate(url=search_url)
+            
+            # Use MCP navigate if available
+            if hasattr(mcp_client, 'navigate'):
+                mcp_client.navigate(url=search_url)
+            elif callable(mcp_client):
+                # If mcp_client is a function that can call MCP tools
+                mcp_client('navigate', url=search_url)
+            else:
+                print("MCP client does not support navigation")
+                return results
             
             # Wait for page to load
-            time.sleep(2)
+            time.sleep(3)
             
-            # Get page snapshot to find headlines
-            snapshot = mcp_client.snapshot()
+            # Get page snapshot
+            snapshot = None
+            if hasattr(mcp_client, 'snapshot'):
+                snapshot = mcp_client.snapshot()
+            elif callable(mcp_client):
+                snapshot = mcp_client('snapshot')
             
-            # Extract headlines and links from the snapshot
-            # This would need to be parsed from the accessibility snapshot
-            # For now, this is a template structure
+            if snapshot:
+                # Extract headlines from snapshot
+                headlines = extract_headlines_from_snapshot(snapshot, max_results=self.max_results)
+                
+                # Format results
+                for item in headlines:
+                    results.append(self.format_result(
+                        source="Google News",
+                        headline=item['text'],
+                        url=item['url']
+                    ))
             
         except Exception as e:
             print(f"Error scraping news: {e}")
+            import traceback
+            traceback.print_exc()
         
         return results
 
