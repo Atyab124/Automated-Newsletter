@@ -184,7 +184,7 @@ elif page == "Fact Sheets":
         )
         
         # Manual fact sheet generation
-        st.info("ℹ️ **Note**: Research papers (arXiv, Semantic Scholar) work immediately. News, LinkedIn, and web scraping require Playwright MCP integration. See MCP_INTEGRATION.md for setup.")
+        st.info("ℹ️ **Note**: All scrapers now use open APIs! Research papers work immediately. News uses NewsAPI (optional API key) or RSS feeds. Web uses RSS feeds. LinkedIn requires API authentication.")
         
         if st.button("Generate New Fact Sheet"):
             topic_name = next(t['topic_name'] for t in topics if t['id'] == selected_topic_id)

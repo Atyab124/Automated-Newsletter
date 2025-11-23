@@ -49,3 +49,6 @@ Thumbs.db
 newsletters/
 fact_sheets/
 
+#Markdown files
+MCP_INTEGRATION.md
+USING_MCP.md

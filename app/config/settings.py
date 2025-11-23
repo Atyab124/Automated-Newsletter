@@ -30,3 +30,13 @@ FREQUENCY_OPTIONS = {
 ARXIV_MAX_RESULTS = 10
 SEMANTIC_SCHOLAR_MAX_RESULTS = 10
 
+# News API Configuration
+# Get free API key from https://newsapi.org/
+NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "")
+
+# LinkedIn API Configuration
+# Requires OAuth setup - see https://learn.microsoft.com/en-us/linkedin/shared/authentication/authentication
+LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN", "")
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "")
+

@@ -67,7 +67,7 @@ This helps the AI learn your writing style!
 2. Select your topic
 3. Click "Generate New Fact Sheet"
 
-**Note**: Currently, research papers (arXiv, Semantic Scholar) will work immediately. News, LinkedIn, and web scraping require Playwright MCP integration (see MCP_INTEGRATION.md).
+**Note**: All scrapers now use open APIs! Research papers work immediately. News uses NewsAPI (optional) or RSS feeds. Web uses RSS feeds. LinkedIn requires API setup (optional - see API_SETUP.md).
 
 ### 4.4 Generate Newsletter
 
@@ -79,16 +79,19 @@ This helps the AI learn your writing style!
 ## What Works Immediately
 
 ✅ **Research Papers**: arXiv and Semantic Scholar scraping works out of the box  
+✅ **News**: Works with RSS feeds (no setup) or NewsAPI (optional key)  
+✅ **Web Articles**: Works with RSS feeds (no setup)  
 ✅ **Fact Sheet Generation**: Creates structured fact sheets from available data  
 ✅ **Style Extraction**: Learns from your writing samples  
 ✅ **Newsletter Generation**: Uses Ollama to generate newsletters  
 ✅ **Scheduling**: Automated pipeline runs on schedule  
 
-## What Requires Setup
+## What Requires Setup (Optional)
 
-⚠️ **News/LinkedIn/Web Scraping**: Requires Playwright MCP integration (see MCP_INTEGRATION.md)
+⚠️ **NewsAPI Key**: Optional - get free key from https://newsapi.org/ for more news results (or use RSS - no key needed)  
+⚠️ **LinkedIn**: Requires OAuth setup (optional - see API_SETUP.md)
 
-The system works with just research papers, so you can start using it immediately!
+The system works great with research papers, news RSS, and web RSS - all without any API keys!
 
 ## Troubleshooting
 
@@ -100,7 +103,8 @@ The system works with just research papers, so you can start using it immediatel
 ### "No fact sheet generated"
 - Check your internet connection
 - Research paper APIs should work without issues
-- For other sources, see MCP_INTEGRATION.md
+- News and web RSS feeds should work without issues
+- For API setup, see API_SETUP.md
 
 ### "Database error"
 - Ensure you have write permissions in the directory
@@ -109,7 +113,7 @@ The system works with just research papers, so you can start using it immediatel
 ## Next Steps
 
 - Read the full [README.md](README.md) for detailed documentation
-- Check [MCP_INTEGRATION.md](MCP_INTEGRATION.md) for Playwright MCP setup
+- Check [API_SETUP.md](API_SETUP.md) for optional API key setup
 - Customize settings in `app/config/settings.py`
 - Add more topics and experiment with different frequencies
 

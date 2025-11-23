@@ -4,7 +4,8 @@ A Python-based automated newsletter system that scrapes content from multiple so
 
 ## Features
 
-- **Multi-Source Scraping**: Scrapes research papers (arXiv, Semantic Scholar), news headlines, LinkedIn posts, and web articles
+- **Multi-Source Scraping**: Scrapes research papers (arXiv, Semantic Scholar), news headlines (NewsAPI/RSS), LinkedIn posts (LinkedIn API), and web articles (RSS feeds)
+- **Open Source APIs**: Uses only open-source APIs - no closed-source dependencies
 - **Fact Sheet Generation**: Creates structured fact sheets with verified sources
 - **Writing Style Learning**: Extracts your writing style from uploaded samples
 - **AI-Powered Generation**: Uses Ollama to generate newsletters strictly from fact sheets (no hallucinations)
@@ -15,7 +16,8 @@ A Python-based automated newsletter system that scrapes content from multiple so
 
 - Python 3.8+
 - Ollama installed and running (default: http://localhost:11434)
-- Playwright MCP (available in Cursor)
+- Optional: NewsAPI key for news scraping (free tier available, or uses RSS feeds)
+- Optional: LinkedIn API credentials for LinkedIn scraping
 
 ## Installation
 
@@ -29,9 +31,12 @@ pip install -r requirements.txt
 3. Install and start Ollama:
    - Download from https://ollama.ai
    - Install and start the Ollama service
-   - Pull a model (e.g., `ollama pull llama3.2`)
+   - Pull a model (e.g., `ollama pull qwen2.5`)
 
-4. Ensure Playwright MCP is configured in Cursor (should be available by default)
+4. (Optional) Set up API keys:
+   - NewsAPI: Get free key from https://newsapi.org/ (or use RSS feeds - no key needed)
+   - LinkedIn: Requires OAuth setup (see API_SETUP.md)
+   - See `API_SETUP.md` for detailed instructions
 
 ## Configuration
 
@@ -126,16 +131,29 @@ All data is stored in SQLite (`newsletter.db` by default):
 - **arXiv**: Uses arXiv API (no authentication required)
 - **Semantic Scholar**: Uses Semantic Scholar API (no authentication required)
 
-### News & Web Content
-- **Google News**: Scraped via Playwright MCP
-- **LinkedIn**: Public posts scraped via Playwright MCP
-- **Web Articles**: Scraped from various sites via Playwright MCP
+### News
+- **NewsAPI**: Uses NewsAPI (optional API key, free tier: 100 requests/day)
+- **RSS Feeds**: Falls back to Google News RSS feeds if no API key (no limits)
+
+### LinkedIn
+- **LinkedIn API**: Uses LinkedIn API with OAuth 2.0 (requires authentication setup)
+- See `API_SETUP.md` for setup instructions
+
+### Web Articles
+- **RSS Feeds**: Scrapes from Medium, Dev.to, Hacker News RSS feeds
+- No API keys required - works immediately!
 
 ## Important Notes
 
-### Playwright MCP Integration
+### API Setup
 
-The scrapers are designed to work with Playwright MCP tools available in Cursor. The actual MCP calls should be made through Cursor's MCP interface. The `mcp_wrapper.py` file provides a structure for how scrapers interact with MCP tools.
+Most scrapers work immediately without setup:
+- ✅ Research papers: No setup needed
+- ✅ News: Works with RSS feeds (no setup), or use NewsAPI key for more results
+- ✅ Web articles: Works with RSS feeds (no setup)
+- ⚠️ LinkedIn: Requires OAuth setup (optional - see API_SETUP.md)
+
+See `API_SETUP.md` for detailed API setup instructions.
 
 ### No Hallucinations
 

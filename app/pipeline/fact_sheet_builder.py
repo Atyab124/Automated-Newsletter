@@ -29,29 +29,23 @@ class FactSheetBuilder:
         
         Args:
             topic: The topic to build a fact sheet for
-            use_mcp_client: Optional MCP client for Playwright scraping
+            use_mcp_client: Deprecated - kept for backward compatibility
         
         Returns:
             Dict with 'markdown' and 'json_data' keys
         """
-        # Scrape from all sources
+        # Scrape from all sources using APIs
+        print(f"Scraping research papers for: {topic}")
         research_papers = self.research_scraper.scrape(topic)
         
-        # For Playwright-based scrapers, use MCP if available
-        if use_mcp_client:
-            self.news_scraper._current_topic = topic
-            news_items = self.news_scraper.scrape_with_mcp(use_mcp_client)
-            
-            self.linkedin_scraper._current_topic = topic
-            linkedin_posts = self.linkedin_scraper.scrape_with_mcp(use_mcp_client)
-            
-            self.web_scraper._current_topic = topic
-            web_articles = self.web_scraper.scrape_with_mcp(use_mcp_client)
-        else:
-            # Fallback: return empty lists if MCP not available
-            news_items = []
-            linkedin_posts = []
-            web_articles = []
+        print(f"Scraping news for: {topic}")
+        news_items = self.news_scraper.scrape(topic)
+        
+        print(f"Scraping LinkedIn for: {topic}")
+        linkedin_posts = self.linkedin_scraper.scrape(topic)
+        
+        print(f"Scraping web articles for: {topic}")
+        web_articles = self.web_scraper.scrape(topic)
         
         # Build JSON structure
         json_data = {
