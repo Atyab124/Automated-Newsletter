@@ -14,7 +14,7 @@ from db.database import Database
 from pipeline.fact_sheet_builder import FactSheetBuilder
 from llm.style_extractor import StyleExtractor
 from llm.newsletter_generator import NewsletterGenerator
-from config.settings import FREQUENCY_OPTIONS
+from config.settings import FREQUENCY_OPTIONS, LLM_PROVIDER
 
 
 class NewsletterScheduler:
@@ -24,8 +24,8 @@ class NewsletterScheduler:
         self.db = db
         self.scheduler = BackgroundScheduler()
         self.fact_sheet_builder = FactSheetBuilder()
-        self.style_extractor = StyleExtractor()
-        self.newsletter_generator = NewsletterGenerator()
+        self.style_extractor = StyleExtractor(provider=LLM_PROVIDER)
+        self.newsletter_generator = NewsletterGenerator(provider=LLM_PROVIDER)
         self.mcp_client = mcp_client
         self.running = False
     

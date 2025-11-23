@@ -15,7 +15,8 @@ from pipeline.fact_sheet_builder import FactSheetBuilder
 from pipeline.scheduler import NewsletterScheduler
 from llm.style_extractor import StyleExtractor
 from llm.newsletter_generator import NewsletterGenerator
-from config.settings import FREQUENCY_OPTIONS
+from llm.llm_provider import LLMProvider
+from config.settings import FREQUENCY_OPTIONS, LLM_PROVIDER, OLLAMA_MODEL, OPENAI_MODEL
 
 # Page configuration
 st.set_page_config(
@@ -33,9 +34,36 @@ if 'scheduler' not in st.session_state:
 
 # Sidebar navigation
 st.sidebar.title("📰 Newsletter Generator")
+
+# LLM Provider Configuration
+st.sidebar.markdown("### LLM Configuration")
+llm_provider = st.sidebar.selectbox(
+    "LLM Provider",
+    ["ollama", "openai"],
+    index=0 if LLM_PROVIDER == "ollama" else 1,
+    help="Choose between Ollama (local) or OpenAI (cloud)"
+)
+
+# Store in session state
+if 'llm_provider' not in st.session_state:
+    st.session_state.llm_provider = llm_provider
+else:
+    st.session_state.llm_provider = llm_provider
+
+# Show provider-specific info
+if llm_provider == "openai":
+    import os
+    openai_key = os.getenv("OPENAI_API_KEY", "")
+    if not openai_key:
+        st.sidebar.warning("⚠️ OPENAI_API_KEY not set. Set it as environment variable.")
+    else:
+        st.sidebar.success("✅ OpenAI API key configured")
+elif llm_provider == "ollama":
+    st.sidebar.info("ℹ️ Using local Ollama")
+
 page = st.sidebar.radio(
     "Navigation",
-    ["Topics Manager", "Writing Samples", "Fact Sheets", "Generate Newsletter"]
+    ["Topics Manager", "Writing Samples", "Fact Sheets", "Generate Newsletter", "LLM Settings"]
 )
 
 # Topics Manager Page
@@ -263,14 +291,14 @@ elif page == "Generate Newsletter":
                         # Extract style
                         if writing_samples:
                             sample_texts = [s['text'] for s in writing_samples]
-                            style_extractor = StyleExtractor()
+                            style_extractor = StyleExtractor(provider=st.session_state.llm_provider)
                             style_profile = style_extractor.extract_style(sample_texts)
                         else:
                             style_profile = {"tone": "professional", "structure": "clear paragraphs", "voice": "third person", "common_phrases": []}
                             st.info("No writing samples found. Using default style.")
                         
                         # Generate newsletter
-                        generator = NewsletterGenerator()
+                        generator = NewsletterGenerator(provider=st.session_state.llm_provider)
                         newsletter = generator.generate(
                             fact_sheet['markdown'],
                             style_profile,
@@ -304,6 +332,113 @@ elif page == "Generate Newsletter":
                 st.info("No newsletter generated yet. Click 'Generate Newsletter' above!")
     else:
         st.warning("Please add a topic first in the Topics Manager page.")
+
+# LLM Settings Page
+elif page == "LLM Settings":
+    st.title("LLM Settings")
+    st.write("Configure your LLM provider and model settings.")
+    
+    provider = st.selectbox(
+        "LLM Provider",
+        ["ollama", "openai"],
+        index=0 if st.session_state.llm_provider == "ollama" else 1,
+        help="Ollama runs locally, OpenAI uses cloud API"
+    )
+    
+    if provider == "ollama":
+        st.subheader("Ollama Configuration")
+        st.info("Ollama runs locally on your machine. Make sure Ollama is installed and running.")
+        
+        ollama_model = st.text_input(
+            "Ollama Model",
+            value=OLLAMA_MODEL,
+            help="Model name (e.g., qwen2.5, llama3.2, mistral)"
+        )
+        
+        ollama_url = st.text_input(
+            "Ollama Base URL",
+            value="http://localhost:11434",
+            help="Ollama API endpoint"
+        )
+        
+        st.code(f"""
+# Set these environment variables:
+export OLLAMA_MODEL="{ollama_model}"
+export OLLAMA_BASE_URL="{ollama_url}"
+export LLM_PROVIDER="ollama"
+        """)
+        
+        if st.button("Test Ollama Connection"):
+            try:
+                llm = LLMProvider(provider="ollama", model=ollama_model)
+                response = llm.generate("Say 'Hello' in one word.")
+                st.success(f"✅ Ollama is working! Response: {response}")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+    
+    elif provider == "openai":
+        st.subheader("OpenAI Configuration")
+        
+        import os
+        current_key = os.getenv("OPENAI_API_KEY", "")
+        
+        if current_key:
+            st.success("✅ OpenAI API key is set")
+            masked_key = current_key[:8] + "..." + current_key[-4:] if len(current_key) > 12 else "***"
+            st.info(f"Current key: {masked_key}")
+        else:
+            st.warning("⚠️ OpenAI API key not set")
+        
+        openai_key = st.text_input(
+            "OpenAI API Key",
+            type="password",
+            value=current_key if current_key else "",
+            help="Get your key from https://platform.openai.com/api-keys"
+        )
+        
+        openai_model = st.selectbox(
+            "OpenAI Model",
+            ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+            index=0,
+            help="Choose your preferred OpenAI model"
+        )
+        
+        st.code(f"""
+# Set these environment variables:
+export OPENAI_API_KEY="{openai_key}"
+export OPENAI_MODEL="{openai_model}"
+export LLM_PROVIDER="openai"
+        """)
+        
+        if st.button("Test OpenAI Connection"):
+            try:
+                if not openai_key:
+                    st.error("Please enter an API key first")
+                else:
+                    # Temporarily set for testing
+                    import os
+                    os.environ["OPENAI_API_KEY"] = openai_key
+                    llm = LLMProvider(provider="openai", model=openai_model)
+                    response = llm.generate("Say 'Hello' in one word.")
+                    st.success(f"✅ OpenAI is working! Response: {response}")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+                st.info("Make sure you have installed: pip install openai")
+        
+        st.markdown("""
+        ### Getting an OpenAI API Key
+        
+        1. Go to https://platform.openai.com/api-keys
+        2. Sign up or log in
+        3. Create a new API key
+        4. Copy and paste it above
+        5. Set it as an environment variable
+        
+        **Note**: OpenAI API usage is paid. Check pricing at https://openai.com/pricing
+        """)
+    
+    st.markdown("---")
+    st.info("💡 **Tip**: After setting environment variables, restart the Streamlit app for changes to take effect.")
 
 # Footer
 st.sidebar.markdown("---")

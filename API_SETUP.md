@@ -1,6 +1,6 @@
 # API Setup Guide
 
-This guide explains how to set up API keys for the Newsletter Generator scrapers.
+This guide explains how to set up API keys for the Newsletter Generator scrapers and LLM providers.
 
 ## News Scraper
 
@@ -106,9 +106,63 @@ results = linkedin.scrape("artificial intelligence")
 print(f"Found {len(results)} LinkedIn posts")
 ```
 
+## LLM Provider Setup
+
+### Option 1: Ollama (Default, Free, Local)
+
+Ollama runs locally on your machine - no API keys needed!
+
+1. **Install Ollama**: https://ollama.ai
+2. **Pull a model**: `ollama pull qwen2.5` (or llama3.2, mistral, etc.)
+3. **Start Ollama**: `ollama serve`
+4. **Set environment variable** (optional):
+   ```bash
+   export LLM_PROVIDER="ollama"
+   export OLLAMA_MODEL="qwen2.5"
+   ```
+
+### Option 2: OpenAI (Cloud, Paid)
+
+1. **Get API Key**:
+   - Go to https://platform.openai.com/api-keys
+   - Sign up or log in
+   - Create a new API key
+
+2. **Set Environment Variables**:
+   ```bash
+   export OPENAI_API_KEY="sk-..."
+   export OPENAI_MODEL="gpt-4o-mini"  # or gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+   export LLM_PROVIDER="openai"
+   ```
+
+3. **Install OpenAI Package**:
+   ```bash
+   pip install openai
+   ```
+
+**Note**: OpenAI API usage is paid. Check pricing at https://openai.com/pricing
+
+### Switching Between Providers
+
+You can switch between Ollama and OpenAI:
+- **In UI**: Use the "LLM Settings" page or sidebar dropdown
+- **Via Environment**: Set `LLM_PROVIDER=ollama` or `LLM_PROVIDER=openai`
+
 ## Environment Variables Summary
 
 ```bash
+# LLM Provider (default: ollama)
+LLM_PROVIDER="ollama"  # or "openai"
+
+# Ollama Configuration (if using Ollama)
+OLLAMA_MODEL="qwen2.5"
+OLLAMA_BASE_URL="http://localhost:11434"
+
+# OpenAI Configuration (if using OpenAI)
+OPENAI_API_KEY="sk-..."
+OPENAI_MODEL="gpt-4o-mini"
+OPENAI_BASE_URL="https://api.openai.com/v1"  # Optional, for custom endpoints
+
 # Optional - for NewsAPI (falls back to RSS if not set)
 NEWSAPI_KEY="your_key_here"
 

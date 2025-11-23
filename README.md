@@ -15,7 +15,9 @@ A Python-based automated newsletter system that scrapes content from multiple so
 ## Requirements
 
 - Python 3.8+
-- Ollama installed and running (default: http://localhost:11434)
+- **LLM Provider** (choose one):
+  - **Ollama** (default, free, local): Install from https://ollama.ai
+  - **OpenAI** (cloud, paid): Requires API key from https://platform.openai.com
 - Optional: NewsAPI key for news scraping (free tier available, or uses RSS feeds)
 - Optional: LinkedIn API credentials for LinkedIn scraping
 
@@ -28,10 +30,17 @@ A Python-based automated newsletter system that scrapes content from multiple so
 pip install -r requirements.txt
 ```
 
-3. Install and start Ollama:
+3. Set up LLM Provider (choose one):
+
+   **Option A: Ollama (Recommended for local/free use)**
    - Download from https://ollama.ai
-   - Install and start the Ollama service
-   - Pull a model (e.g., `ollama pull qwen2.5`)
+   - Install and start the Ollama service: `ollama serve`
+   - Pull a model: `ollama pull qwen2.5` (or llama3.2, mistral, etc.)
+   
+   **Option B: OpenAI (Cloud-based, paid)**
+   - Get API key from https://platform.openai.com/api-keys
+   - Set environment variable: `export OPENAI_API_KEY="sk-..."`
+   - Install package: `pip install openai`
 
 4. (Optional) Set up API keys:
    - NewsAPI: Get free key from https://newsapi.org/ (or use RSS feeds - no key needed)
@@ -40,10 +49,13 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Edit `app/config/settings.py` to configure:
+Edit `app/config/settings.py` or set environment variables to configure:
 
+- `LLM_PROVIDER`: "ollama" or "openai" (default: ollama)
 - `OLLAMA_BASE_URL`: Ollama API endpoint (default: http://localhost:11434)
-- `OLLAMA_MODEL`: Model to use (default: llama3.2)
+- `OLLAMA_MODEL`: Ollama model to use (default: qwen2.5)
+- `OPENAI_API_KEY`: OpenAI API key (required if using OpenAI)
+- `OPENAI_MODEL`: OpenAI model to use (default: gpt-4o-mini)
 - `DATABASE_PATH`: SQLite database path (default: newsletter.db)
 - `FREQUENCY_OPTIONS`: Available scheduling frequencies
 

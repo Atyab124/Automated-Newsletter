@@ -1,24 +1,29 @@
 """
-Newsletter Generator using Ollama
+Newsletter Generator using Ollama or OpenAI
 """
-import requests
-import json
-from typing import Dict
+from typing import Dict, Optional
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from config.settings import OLLAMA_BASE_URL, OLLAMA_MODEL, NEWSLETTER_TITLE_TEMPLATE, NEWSLETTER_DATE_FORMAT
+from llm.llm_provider import LLMProvider
+from config.settings import NEWSLETTER_TITLE_TEMPLATE, NEWSLETTER_DATE_FORMAT
 from datetime import datetime
 
 
 class NewsletterGenerator:
-    """Generates newsletters from fact sheets using Ollama"""
+    """Generates newsletters from fact sheets using Ollama or OpenAI"""
     
-    def __init__(self, model: str = OLLAMA_MODEL, base_url: str = OLLAMA_BASE_URL):
-        self.model = model
-        self.base_url = base_url
+    def __init__(self, provider: Optional[str] = None, model: Optional[str] = None):
+        """
+        Initialize newsletter generator
+        
+        Args:
+            provider: "ollama" or "openai" (defaults to config)
+            model: Model name (defaults to provider's default)
+        """
+        self.llm = LLMProvider(provider=provider, model=model)
     
     def generate(self, fact_sheet_markdown: str, style_profile: Dict, topic: str) -> str:
         """
@@ -40,8 +45,11 @@ Voice: {style_profile.get('voice', 'third person')}
 Common Phrases: {', '.join(style_profile.get('common_phrases', []))}
 """
         
-        # Create prompt
-        prompt = f"""Write a newsletter using ONLY information from the FACT SHEET below.
+        # Create system prompt
+        system_prompt = """You are an expert newsletter writer. You create engaging, informative newsletters that strictly adhere to the provided fact sheet. You never make up facts or information that isn't in the fact sheet."""
+        
+        # Create user prompt
+        user_prompt = f"""Write a newsletter using ONLY information from the FACT SHEET below.
 
 CRITICAL RULES:
 1. Use ONLY information from the fact sheet - NO hallucinations or made-up facts
@@ -66,7 +74,12 @@ Generate a well-structured newsletter that:
 Format the newsletter in Markdown with appropriate headings, paragraphs, and links."""
         
         try:
-            response = self._call_ollama(prompt)
+            response = self.llm.generate(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                temperature=0.7,
+                max_tokens=4000
+            )
             
             # Add header with date
             date_str = datetime.now().strftime(NEWSLETTER_DATE_FORMAT)
@@ -78,25 +91,6 @@ Format the newsletter in Markdown with appropriate headings, paragraphs, and lin
         
         except Exception as e:
             print(f"Error generating newsletter: {e}")
+            import traceback
+            traceback.print_exc()
             return f"# Newsletter Generation Error\n\nError: {str(e)}"
-    
-    def _call_ollama(self, prompt: str) -> str:
-        """Call Ollama API"""
-        url = f"{self.base_url}/api/generate"
-        
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": 0.7,
-                "top_p": 0.9
-            }
-        }
-        
-        response = requests.post(url, json=payload, timeout=300)  # Longer timeout for generation
-        response.raise_for_status()
-        
-        result = response.json()
-        return result.get("response", "")
-

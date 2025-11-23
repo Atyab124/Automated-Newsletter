@@ -3,9 +3,18 @@ Configuration settings for the Newsletter Generator
 """
 import os
 
+# LLM Provider Configuration
+# Options: "ollama" or "openai"
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")  # Default to Ollama
+
 # Ollama Configuration
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5")  # Default model, can be changed
+
+# OpenAI Configuration
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Default model, can be changed to gpt-4, gpt-3.5-turbo, etc.
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")  # For custom endpoints
 
 # Database Configuration
 DATABASE_PATH = os.getenv("DATABASE_PATH", "newsletter.db")

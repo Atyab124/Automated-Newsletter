@@ -1,23 +1,28 @@
 """
-Writing Style Extractor using Ollama
+Writing Style Extractor using Ollama or OpenAI
 """
-import requests
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from config.settings import OLLAMA_BASE_URL, OLLAMA_MODEL
+from llm.llm_provider import LLMProvider
 
 
 class StyleExtractor:
-    """Extracts writing style from user samples using Ollama"""
+    """Extracts writing style from user samples using Ollama or OpenAI"""
     
-    def __init__(self, model: str = OLLAMA_MODEL, base_url: str = OLLAMA_BASE_URL):
-        self.model = model
-        self.base_url = base_url
+    def __init__(self, provider: Optional[str] = None, model: Optional[str] = None):
+        """
+        Initialize style extractor
+        
+        Args:
+            provider: "ollama" or "openai" (defaults to config)
+            model: Model name (defaults to provider's default)
+        """
+        self.llm = LLMProvider(provider=provider, model=model)
     
     def extract_style(self, writing_samples: List[str]) -> Dict:
         """
@@ -36,7 +41,9 @@ class StyleExtractor:
         combined_text = "\n\n---\n\n".join(writing_samples)
         
         # Create prompt
-        prompt = f"""Analyze the following writing samples and extract the writing style characteristics.
+        system_prompt = "You are an expert at analyzing writing styles. Extract the key characteristics and return ONLY valid JSON."
+        
+        user_prompt = f"""Analyze the following writing samples and extract the writing style characteristics.
 
 Writing Samples:
 {combined_text}
@@ -52,10 +59,13 @@ Please provide a JSON object with the following structure:
 Respond ONLY with valid JSON, no additional text."""
         
         try:
-            response = self._call_ollama(prompt)
+            response = self.llm.generate(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                temperature=0.3  # Lower temperature for more consistent style extraction
+            )
             
             # Try to parse JSON from response
-            # Ollama might return text with JSON, so we need to extract it
             json_str = self._extract_json(response)
             style_profile = json.loads(json_str)
             
@@ -63,27 +73,12 @@ Respond ONLY with valid JSON, no additional text."""
         
         except Exception as e:
             print(f"Error extracting style: {e}")
+            import traceback
+            traceback.print_exc()
             return self._default_style()
-    
-    def _call_ollama(self, prompt: str) -> str:
-        """Call Ollama API"""
-        url = f"{self.base_url}/api/generate"
-        
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False
-        }
-        
-        response = requests.post(url, json=payload, timeout=120)
-        response.raise_for_status()
-        
-        result = response.json()
-        return result.get("response", "")
     
     def _extract_json(self, text: str) -> str:
         """Extract JSON from text response"""
-        # Try to find JSON object in the response
         import re
         
         # Look for JSON object
@@ -102,4 +97,3 @@ Respond ONLY with valid JSON, no additional text."""
             "voice": "third person, informative",
             "common_phrases": []
         }
-
